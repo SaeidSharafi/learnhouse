@@ -41,6 +41,7 @@ import { useTranslation } from 'react-i18next'
 import dynamic from 'next/dynamic'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/lib/query/keys'
+import { applyManualGrade } from './applyManualGrade'
 
 const CodeMirror = dynamic(() => import('@uiw/react-codemirror'), {
   ssr: false,
@@ -476,38 +477,19 @@ function TaskCodeObject({ view, assignmentTaskUUID, user_id }: TaskCodeObjectPro
 
   // --- MANUAL GRADE (grading view) ---
   async function gradeCustomFC(grade: number, feedback?: string) {
-    if (!assignmentTaskUUID || !userSubmissions) return
-    const maxPoints = assignmentTaskOutsideProvider?.max_grade_value || 100
-    if (Number.isNaN(grade) || grade < 0) {
-      toast.error('Grade must be a positive number.')
-      return
-    }
-    if (grade > maxPoints) {
-      toast.error(`Grade cannot be more than ${maxPoints} points`)
-      return
-    }
-    const trimmed = feedback?.trim()
-    const finalFeedback = trimmed && trimmed.length > 0
-      ? trimmed
-      : `Graded by teacher : @${session?.data?.user?.username ?? ''}`
-    const values = {
-      assignment_task_submission_uuid: userSubmissions.assignment_task_submission_uuid,
-      task_submission: userSubmissions,
+    if (!userSubmissions) return
+    await applyManualGrade({
       grade,
-      task_submission_grade_feedback: finalFeedback,
-    }
-    const res = await handleAssignmentTaskSubmission(
-      values,
+      feedback,
+      maxPoints: assignmentTaskOutsideProvider?.max_grade_value || 100,
       assignmentTaskUUID,
-      assignment.assignment_object.assignment_uuid,
-      access_token
-    )
-    if (res) {
-      getAssignmentTaskSubmissionFromIdentifiedUserUI()
-      toast.success(`Task graded successfully with ${grade} points`)
-    } else {
-      toast.error('Error grading task, please retry later.')
-    }
+      assignmentUUID: assignment.assignment_object.assignment_uuid,
+      accessToken: access_token,
+      username: session?.data?.user?.username,
+      assignmentTaskSubmissionUUID: userSubmissions.assignment_task_submission_uuid,
+      taskSubmissionPayload: userSubmissions,
+      onSuccess: getAssignmentTaskSubmissionFromIdentifiedUserUI,
+    })
   }
 
   // --- GRADE (grading view) ---
@@ -572,6 +554,7 @@ function TaskCodeObject({ view, assignmentTaskUUID, user_id }: TaskCodeObjectPro
         },
         grade: finalGrade,
         task_submission_grade_feedback: feedback,
+        manually_graded: false,
       }
 
       const res = await handleAssignmentTaskSubmission(

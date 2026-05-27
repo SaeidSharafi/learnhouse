@@ -916,6 +916,127 @@ class TestGradeAssignmentSubmission:
 
 
 # ---------------------------------------------------------------------------
+# _apply_grade_and_finalize: manually_graded skip
+# ---------------------------------------------------------------------------
+
+
+class TestManuallyGradedSkipsVerification:
+    """Regression guard for the per-task manual grading override.
+
+    The aggregate grading pass runs server-side re-verification on
+    SERVER_VERIFIED_TASK_TYPES (SHORT_ANSWER, NUMBER_ANSWER, QUIZ, FORM,
+    CODE). When a teacher has manually graded a task, that verification
+    must be skipped so the override survives.
+    """
+
+    async def _make_task_submission(
+        self, db, assignment_task, regular_user, *, ts_id, uuid_suffix,
+        grade, feedback, manually_graded, answer,
+    ):
+        ts = AssignmentTaskSubmission(
+            id=ts_id,
+            assignment_task_submission_uuid=f"ats_{uuid_suffix}",
+            task_submission={"answer": answer},
+            grade=grade,
+            task_submission_grade_feedback=feedback,
+            manually_graded=manually_graded,
+            assignment_type=AssignmentTaskTypeEnum.SHORT_ANSWER,
+            user_id=regular_user.id,
+            activity_id=assignment_task.activity_id,
+            course_id=assignment_task.course_id,
+            chapter_id=assignment_task.chapter_id,
+            assignment_task_id=assignment_task.id,
+            creation_date=str(datetime.now()),
+            update_date=str(datetime.now()),
+        )
+        db.add(ts)
+        await db.commit()
+        await db.refresh(ts)
+        return ts
+
+    async def test_manual_grade_survives_wrong_answer(
+        self,
+        mock_request,
+        db,
+        assignment,
+        assignment_task,
+        user_submission,
+        admin_user,
+        regular_user,
+    ):
+        # SHORT_ANSWER task expects "4"; student submitted "5" (wrong). The
+        # auto-verifier would compute 0, but the teacher set grade=100 with
+        # manually_graded=True — the override must hold.
+        ts = await self._make_task_submission(
+            db, assignment_task, regular_user,
+            ts_id=41, uuid_suffix="manual",
+            grade=100, feedback="Graded by teacher : @badr",
+            manually_graded=True, answer="5",
+        )
+
+        with patch(_PATCH_RBAC, new_callable=AsyncMock), \
+             patch(_PATCH_DISPATCH, new_callable=AsyncMock), \
+             patch(_PATCH_TRACK, new_callable=AsyncMock), \
+             patch(_PATCH_CERT, new_callable=AsyncMock):
+            result = await grade_assignment_submission(
+                mock_request,
+                regular_user.id,
+                assignment.assignment_uuid,
+                admin_user,
+                db,
+            )
+
+        await db.refresh(ts)
+        assert ts.grade == 100
+        assert ts.task_submission_grade_feedback == "Graded by teacher : @badr"
+        assert ts.manually_graded is True
+        assert result["grade"] == 100
+        # The breakdown exposes manually_graded so the modal can render a chip.
+        task_breakdown = result["tasks"][0]
+        assert task_breakdown["manually_graded"] is True
+
+    async def test_non_manual_wrong_answer_is_overwritten(
+        self,
+        mock_request,
+        db,
+        assignment,
+        assignment_task,
+        user_submission,
+        admin_user,
+        regular_user,
+    ):
+        # Same wrong answer but manually_graded=False: the verifier must
+        # overwrite the stale stored grade and stamp its own feedback.
+        # This locks in the anti-tampering behavior so a future change to
+        # the skip condition doesn't accidentally disable verification.
+        ts = await self._make_task_submission(
+            db, assignment_task, regular_user,
+            ts_id=42, uuid_suffix="auto",
+            grade=100, feedback="Stale client grade",
+            manually_graded=False, answer="5",
+        )
+
+        with patch(_PATCH_RBAC, new_callable=AsyncMock), \
+             patch(_PATCH_DISPATCH, new_callable=AsyncMock), \
+             patch(_PATCH_TRACK, new_callable=AsyncMock), \
+             patch(_PATCH_CERT, new_callable=AsyncMock):
+            result = await grade_assignment_submission(
+                mock_request,
+                regular_user.id,
+                assignment.assignment_uuid,
+                admin_user,
+                db,
+            )
+
+        await db.refresh(ts)
+        assert ts.grade == 0
+        assert ts.task_submission_grade_feedback == "Server-verified: incorrect"
+        assert result["grade"] == 0
+        task_breakdown = result["tasks"][0]
+        assert task_breakdown["manually_graded"] is False
+
+
+# ---------------------------------------------------------------------------
 # get_grade_assignment_submission
 # ---------------------------------------------------------------------------
 

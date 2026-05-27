@@ -524,6 +524,7 @@ def _build_tasks_breakdown(
                 "points_summary": f"{task_raw}/{task_max}",
                 "passed": task_percentage >= passing_threshold,
                 "feedback": ts.task_submission_grade_feedback if ts else None,
+                "manually_graded": bool(ts.manually_graded) if ts else False,
             }
         )
     return rows
@@ -1313,7 +1314,7 @@ async def handle_assignment_task_submission(
                 status_code=403,
                 detail="You must be enrolled in this course to submit assignments"
             )
-        
+
         # SECURITY: Regular users cannot update grades - only check if actual values are being set
         if (assignment_task_submission_object.grade is not None and assignment_task_submission_object.grade != 0) or \
            (assignment_task_submission_object.task_submission_grade_feedback is not None and assignment_task_submission_object.task_submission_grade_feedback != ""):
@@ -1321,6 +1322,12 @@ async def handle_assignment_task_submission(
                 status_code=403,
                 detail="You do not have permission to update grades"
             )
+
+        # Students cannot flag a submission as manually graded — that's
+        # exclusively a teacher action. Also force-clear any prior flag so a
+        # student edit invalidates the teacher's earlier manual grade and the
+        # task re-enters the server-verified pool on the next grading pass.
+        assignment_task_submission_object.manually_graded = False
 
         # Only need read permission for submissions
         await check_resource_access(request, db_session, current_user, course.course_uuid, AccessAction.READ)
@@ -2511,11 +2518,15 @@ async def _apply_grade_and_finalize(
             task_submissions_by_task_id[ts.assignment_task_id] = ts
 
     # Server-side re-verification for task types where we don't trust the
-    # client's computed grade (SHORT_ANSWER, NUMBER_ANSWER). If the
-    # verified grade differs from what the client submitted, overwrite it
-    # so tampering is caught and future reads see the correct number.
+    # client's computed grade (SHORT_ANSWER, NUMBER_ANSWER, QUIZ, FORM,
+    # CODE). If the verified grade differs from what the client submitted,
+    # overwrite it so tampering is caught and future reads see the correct
+    # number. Tasks that a teacher has manually graded are skipped so the
+    # deliberate override is not clobbered by the auto-grader.
     for task in assignment_tasks:
         ts = task_submissions_by_task_id.get(task.id)
+        if ts is not None and ts.manually_graded:
+            continue
         verified = await _server_verified_task_grade(task, ts)
         if verified is None or ts is None:
             continue
