@@ -24,6 +24,7 @@ from src.security.features_utils.usage import (
 )
 from src.security.features_utils.plan_check import get_org_plan
 from src.security.features_utils.plans import plan_meets_requirement
+from src.services.ai.model_selector import get_model_for_task
 from src.services.ai.courseplanning import (
     get_course_planning_session,
     create_course_planning_session,
@@ -77,17 +78,6 @@ async def event_generator_with_save(generator, session_uuid: str, activity_uuid:
         yield f"data: {json.dumps({'type': 'error', 'message': 'An internal error occurred while generating activity content.'})}\n\n"
 
 
-async def get_org_ai_model(org_id: int, db_session: AsyncSession) -> str:
-    """Get the AI model based on the organization's plan."""
-    try:
-        current_plan = await get_org_plan(org_id, db_session)
-        if plan_meets_requirement(current_plan, "pro"):
-            return "gemini-2.5-pro"
-        return "gemini-2.5-flash"
-    except Exception:
-        return "gemini-2.5-flash"
-
-
 async def verify_user_org_membership(user_id: int, org_id: int, db_session: AsyncSession) -> bool:
     """Verify that the user is a member of the organization (superadmins bypass)."""
     return await is_org_member(user_id, org_id, db_session)
@@ -129,8 +119,10 @@ async def start_course_planning_session(
         raise HTTPException(status_code=403, detail="User is not a member of this organization")
 
     # Get AI model — pro models cost more credits
-    ai_model = await get_org_ai_model(org.id, db_session)
-    credit_cost = 3 if ai_model == "gemini-2.5-pro" else 1
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
+    credit_cost = 3 if is_pro else 1
     # F-9: per-user + per-org rate limit before any compute / credit spend.
     from src.services.security.rate_limiting import enforce_ai_rate_limit
     enforce_ai_rate_limit(resolve_acting_user_id(current_user), org.id)
@@ -146,7 +138,8 @@ async def start_course_planning_session(
         prompt=session_request.prompt,
         session=session,
         gemini_model_name=ai_model,
-        attachments=session_request.attachments
+        attachments=session_request.attachments,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(
@@ -210,8 +203,10 @@ async def iterate_course_planning_session(
         raise HTTPException(status_code=403, detail="User is not a member of this organization")
 
     # Get AI model — pro models cost more credits
-    ai_model = await get_org_ai_model(org.id, db_session)
-    credit_cost = 3 if ai_model == "gemini-2.5-pro" else 1
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
+    credit_cost = 3 if is_pro else 1
     # F-9: per-user + per-org rate limit before any compute / credit spend.
     from src.services.security.rate_limiting import enforce_ai_rate_limit
     enforce_ai_rate_limit(resolve_acting_user_id(current_user), org.id)
@@ -228,7 +223,8 @@ async def iterate_course_planning_session(
         session=session,
         gemini_model_name=ai_model,
         current_plan=current_plan,
-        attachments=message_request.attachments
+        attachments=message_request.attachments,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(
@@ -482,8 +478,10 @@ async def generate_activity_content(
         raise HTTPException(status_code=403, detail="User is not a member of this organization")
 
     # Get AI model — pro models cost more credits
-    ai_model = await get_org_ai_model(org.id, db_session)
-    credit_cost = 3 if ai_model == "gemini-2.5-pro" else 1
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
+    credit_cost = 3 if is_pro else 1
     # F-9: per-user + per-org rate limit before any compute / credit spend.
     from src.services.security.rate_limiting import enforce_ai_rate_limit
     enforce_ai_rate_limit(resolve_acting_user_id(current_user), org.id)
@@ -507,7 +505,8 @@ async def generate_activity_content(
         course_description=content_request.course_description,
         gemini_model_name=ai_model,
         prompt=content_request.prompt,
-        current_content=current_content
+        current_content=current_content,
+        is_pro=is_pro,
     )
 
     # Use event_generator_with_save to automatically save content to database when streaming completes

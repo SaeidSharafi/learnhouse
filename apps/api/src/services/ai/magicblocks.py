@@ -7,6 +7,8 @@ import asyncio
 
 from config.config import get_learnhouse_config
 from src.services.ai.base import get_gemini_client
+from src.services.ai.model_selector import get_model_for_task
+from src.services.ai.rotation import ModelRotationService
 from src.services.ai.schemas.magicblocks import (
     MagicBlockContext,
     MagicBlockSessionData,
@@ -197,8 +199,9 @@ The HTML must be complete and ready to render in an iframe."""
 async def generate_magicblock_stream(
     prompt: str,
     session: MagicBlockSessionData,
-    gemini_model_name: str = "gemini-2.0-flash",
-    current_html: Optional[str] = None
+    gemini_model_name: Optional[str] = None,
+    current_html: Optional[str] = None,
+    is_pro: bool = False
 ) -> AsyncGenerator[str, None]:
     """
     Generate MagicBlock HTML content with streaming.
@@ -211,6 +214,8 @@ async def generate_magicblock_stream(
         current_html: The current HTML content to iterate on (for modifications)
     """
     try:
+        if gemini_model_name is None:
+            gemini_model_name = get_model_for_task("content_generation", False)
         client = get_gemini_client()
 
         # Build conversation contents
@@ -257,9 +262,16 @@ Please modify the HTML code above according to the user's request. Output ONLY t
 
         def _run_stream():
             try:
-                resp = client.models.generate_content_stream(
-                    model=gemini_model_name,
-                    contents=contents,
+                def make_stream_call(model: str):
+                    return client.models.generate_content_stream(
+                        model=model,
+                        contents=contents,
+                    )
+
+                resp = ModelRotationService.call_with_rotation_stream(
+                    task_type="content_generation",
+                    is_pro=is_pro,
+                    call_fn=make_stream_call
                 )
                 for chunk in resp:
                     loop.call_soon_threadsafe(queue.put_nowait, chunk)

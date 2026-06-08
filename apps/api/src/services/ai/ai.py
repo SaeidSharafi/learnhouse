@@ -25,6 +25,7 @@ from src.services.ai.schemas.ai import (
     SendActivityAIChatMessage,
     StartActivityAIChatSession,
 )
+from src.services.ai.model_selector import get_model_for_task
 from src.services.courses.activities.utils import (
     serialize_activity_text_to_ai_comprehensible_text,
     structure_activity_content_by_type,
@@ -142,8 +143,7 @@ async def ai_start_activity_chat_session(
 
     org_config = OrganizationConfig.model_validate(org_config)
 
-    # Use Gemini 2.5 Flash as the default model
-    ai_model = "gemini-2.5-flash"
+    ai_model = get_model_for_task("main_assistant", org_config.plan == "pro")
 
     chat_session = get_chat_session_history()
 
@@ -281,8 +281,7 @@ async def ai_send_activity_chat_message(
 
     org_config = OrganizationConfig.model_validate(org_config)
 
-    # Use Gemini 2.5 Flash as the default model
-    ai_model = "gemini-2.5-flash"
+    ai_model = get_model_for_task("main_assistant", org_config.plan == "pro")
 
     chat_session = get_chat_session_history(chat_session_object.aichat_uuid)
 
@@ -413,8 +412,7 @@ async def _get_activity_and_course_info(
 
     org_config = OrganizationConfig.model_validate(org_config)
 
-    # Use Gemini 2.5 Flash as the default model
-    ai_model = "gemini-2.5-flash"
+    ai_model = get_model_for_task("main_assistant", org_config.plan == "pro")
 
     return activity, course, org, ai_model, ai_friendly_text
 

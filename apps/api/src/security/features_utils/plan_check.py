@@ -67,7 +67,7 @@ async def get_org_plan(org_id: int, db_session: AsyncSession) -> PlanLevel:
     config = org_config.config or {}
     version = config.get("config_version", "1.0")
     if version.startswith("2"):
-        return config.get("plan", "free")
+        return config.get("plan", "enterprise")
     return config.get("cloud", {}).get("plan", "free")
 
 

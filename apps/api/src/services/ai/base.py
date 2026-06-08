@@ -8,6 +8,8 @@ import asyncio
 from google import genai
 
 from config.config import get_learnhouse_config
+from src.services.ai.rotation import ModelRotationService
+from src.services.ai.model_selector import get_model_for_task
 
 logger = logging.getLogger(__name__)
 
@@ -27,15 +29,13 @@ def ask_ai(
     text_reference: str,
     message_for_the_prompt: str,
     gemini_model_name: str,
+    is_pro: bool = False,
 ) -> Dict[str, Any]:
     """
-    Process an AI query using Google Gen AI SDK with course content as context
+    Process an AI query using Google Gen AI SDK with course content as context.
+    Automatically rotates through model pool on 429 rate limit errors.
     """
     try:
-        # Use Gemini 2.0 Flash as default if no model specified or if OpenAI model
-        if not gemini_model_name or gemini_model_name.startswith("gpt-"):
-            gemini_model_name = "gemini-2.5-flash"
-
         client = get_gemini_client()
 
         # Build conversation contents
@@ -61,18 +61,24 @@ def ask_ai(
         # Add current question
         contents.append({"role": "user", "parts": [{"text": question}]})
 
-        # Generate response (60s timeout)
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
-            future = executor.submit(
-                client.models.generate_content,
-                model=gemini_model_name,
-                contents=contents,
-            )
-            try:
-                response = future.result(timeout=60.0)
-            except concurrent.futures.TimeoutError:
-                raise TimeoutError("Gemini API request timed out after 60s")
+        def make_call(model: str):
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(
+                    client.models.generate_content,
+                    model=model,
+                    contents=contents,
+                )
+                try:
+                    return future.result(timeout=60.0)
+                except concurrent.futures.TimeoutError:
+                    raise TimeoutError("Gemini API request timed out after 60s")
+
+        response = ModelRotationService.call_with_rotation(
+            task_type="main_assistant",
+            is_pro=is_pro,
+            call_fn=make_call
+        )
 
         return {
             "output": response.text,
@@ -332,18 +338,27 @@ def generate_chat_title(user_message: str, ai_response: str) -> str:
             f"User: {user_message[:300]}\n"
             f"Assistant: {ai_response[:300]}"
         )
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=[{"role": "user", "parts": [{"text": prompt}]}],
-            config={"max_output_tokens": 30, "temperature": 0.3},
+
+        def make_call(model: str):
+            return client.models.generate_content(
+                model=model,
+                contents=[{"role": "user", "parts": [{"text": prompt}]}],
+                config={"max_output_tokens": 30, "temperature": 0.3},
+            )
+
+        response = ModelRotationService.call_with_rotation(
+            task_type="short_task",
+            is_pro=False,
+            call_fn=make_call
         )
+
         if response.text:
             title = response.text.strip().strip('"\'').strip()
             if title:
                 return title[:60]
     except Exception as e:
         logger.error("Failed to generate chat title: %s", e, exc_info=True)
-    # Fallback to truncated message
+
     fallback = user_message[:50].strip()
     if len(user_message) > 50:
         fallback += "..."
@@ -356,47 +371,46 @@ async def ask_ai_stream(
     text_reference: str,
     message_for_the_prompt: str,
     gemini_model_name: str,
+    is_pro: bool = False,
 ) -> AsyncGenerator[str, None]:
     """
     Process an AI query using Google Gen AI SDK with streaming response.
     Yields chunks of the response as they arrive.
+    Automatically rotates through model pool on 429 rate limit errors.
     """
     try:
-        # Use Gemini 2.0 Flash as default if no model specified or if OpenAI model
-        if not gemini_model_name or gemini_model_name.startswith("gpt-"):
-            gemini_model_name = "gemini-2.5-flash"
-
         client = get_gemini_client()
 
-        # Build conversation contents
         contents = []
 
-        # Add system instruction as the first message
         system_instruction = f"{message_for_the_prompt}\n\nCourse Content Context:\n{text_reference}"
         contents.append({"role": "user", "parts": [{"text": system_instruction}]})
         contents.append({"role": "model", "parts": [{"text": "I understand. I'm ready to help with questions about this course content."}]})
 
-        # Add message history if available
         if hasattr(message_history, 'messages'):
             for msg in message_history.messages:
                 if hasattr(msg, 'type') and hasattr(msg, 'content'):
                     role = "user" if msg.type == "human" else "model"
                     contents.append({"role": role, "parts": [{"text": msg.content}]})
         elif isinstance(message_history, list):
-            # Handle simple list format
             for msg in message_history:
                 if isinstance(msg, dict) and 'role' in msg and 'content' in msg:
                     contents.append({"role": msg['role'], "parts": [{"text": msg['content']}]})
 
-        # Add current question
         contents.append({"role": "user", "parts": [{"text": question}]})
 
-        # Generate response with streaming (run sync SDK in thread to allow timeout)
+        def make_stream_call(model: str):
+            return client.models.generate_content_stream(
+                model=model,
+                contents=contents,
+            )
+
         response = await asyncio.wait_for(
             asyncio.to_thread(
-                client.models.generate_content_stream,
-                model=gemini_model_name,
-                contents=contents,
+                ModelRotationService.call_with_rotation_stream,
+                task_type="main_assistant",
+                is_pro=is_pro,
+                call_fn=make_stream_call,
             ),
             timeout=90.0,
         )
@@ -429,10 +443,8 @@ async def generate_follow_up_suggestions(
     try:
         client = get_gemini_client()
 
-        # Use only a small snippet of the response for speed
         response_snippet = ai_response[:500] if len(ai_response) > 500 else ai_response
 
-        # Short, direct prompt for fast generation - respond in same language as user
         prompt = f"""Given this educational response, suggest 3 brief follow-up questions a student might ask. Output only the questions, one per line. IMPORTANT: Write the questions in the same language as the user's question.
 
 User's question: {user_message[:200]}
@@ -442,17 +454,22 @@ Questions:"""
 
         contents = [{"role": "user", "parts": [{"text": prompt}]}]
 
-        # Use flash model with limited output for speed
-        response = client.models.generate_content(
-            model="gemini-2.0-flash-lite",
-            contents=contents,
-            config={
-                "max_output_tokens": 150,
-                "temperature": 0.7,
-            }
+        def make_call(model: str):
+            return client.models.generate_content(
+                model=model,
+                contents=contents,
+                config={
+                    "max_output_tokens": 150,
+                    "temperature": 0.7,
+                }
+            )
+
+        response = ModelRotationService.call_with_rotation(
+            task_type="short_task",
+            is_pro=False,
+            call_fn=make_call
         )
 
-        # Parse the response into a list of questions
         if response.text:
             questions = [q.strip().lstrip('0123456789.-) ') for q in response.text.strip().split('\n') if q.strip() and '?' in q]
             return questions[:3]

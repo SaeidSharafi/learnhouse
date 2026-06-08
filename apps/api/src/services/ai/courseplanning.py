@@ -9,6 +9,8 @@ import threading
 
 from config.config import get_learnhouse_config
 from src.services.ai.base import get_gemini_client
+from src.services.ai.model_selector import get_model_for_task
+from src.services.ai.rotation import ModelRotationService
 from src.services.ai.schemas.courseplanning import (
     CoursePlan,
     CoursePlanningSessionData,
@@ -422,15 +424,18 @@ REQUIREMENTS:
 async def generate_course_plan_stream(
     prompt: str,
     session: CoursePlanningSessionData,
-    gemini_model_name: str = "gemini-2.0-flash",
+    gemini_model_name: Optional[str] = None,
     current_plan: Optional[CoursePlan] = None,
-    attachments: Optional[List[AttachmentData]] = None
+    attachments: Optional[List[AttachmentData]] = None,
+    is_pro: bool = False
 ) -> AsyncGenerator[str, None]:
     """
     Generate course plan with streaming.
     Yields chunks of the response as they arrive.
     """
     try:
+        if gemini_model_name is None:
+            gemini_model_name = get_model_for_task("content_generation", False)
         client = get_gemini_client()
 
         # Build conversation contents using dictionaries (simpler and more compatible)
@@ -505,9 +510,16 @@ IMPORTANT: You MUST incorporate the materials provided above into the course pla
             """Run the synchronous stream in a thread, putting chunks in queue"""
             nonlocal generation_error
             try:
-                response = client.models.generate_content_stream(
-                    model=gemini_model_name,
-                    contents=contents
+                def make_stream_call(model: str):
+                    return client.models.generate_content_stream(
+                        model=model,
+                        contents=contents
+                    )
+
+                response = ModelRotationService.call_with_rotation_stream(
+                    task_type="content_generation",
+                    is_pro=is_pro,
+                    call_fn=make_stream_call
                 )
                 for chunk in response:
                     if chunk.text:
@@ -583,9 +595,10 @@ async def generate_activity_content_stream(
     chapter_name: str,
     course_name: str,
     course_description: str,
-    gemini_model_name: str = "gemini-2.0-flash",
+    gemini_model_name: Optional[str] = None,
     prompt: Optional[str] = None,
-    current_content: Optional[str] = None
+    current_content: Optional[str] = None,
+    is_pro: bool = False
 ) -> AsyncGenerator[str, None]:
     """
     Generate activity content with streaming.
@@ -593,6 +606,8 @@ async def generate_activity_content_stream(
     Uses JSON mode to ensure valid JSON output.
     """
     try:
+        if gemini_model_name is None:
+            gemini_model_name = get_model_for_task("content_generation", False)
         client = get_gemini_client()
 
         # Build conversation contents using dictionaries
@@ -662,10 +677,17 @@ Please modify the content according to the user's request. Output ONLY the compl
             """Run the synchronous stream in a thread, putting chunks in queue"""
             nonlocal generation_error
             try:
-                response = client.models.generate_content_stream(
-                    model=gemini_model_name,
-                    contents=contents,
-                    config=generation_config
+                def make_stream_call(model: str):
+                    return client.models.generate_content_stream(
+                        model=model,
+                        contents=contents,
+                        config=generation_config
+                    )
+
+                response = ModelRotationService.call_with_rotation_stream(
+                    task_type="content_generation",
+                    is_pro=is_pro,
+                    call_fn=make_stream_call
                 )
                 for chunk in response:
                     if chunk.text:

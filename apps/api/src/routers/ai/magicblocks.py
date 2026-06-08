@@ -15,6 +15,7 @@ from src.security.features_utils.usage import (
 )
 from src.security.features_utils.plan_check import get_org_plan
 from src.security.features_utils.plans import plan_meets_requirement
+from src.services.ai.model_selector import get_model_for_task
 from src.services.ai.magicblocks import (
     get_magicblock_session,
     create_magicblock_session,
@@ -44,26 +45,6 @@ async def event_generator(generator, session_uuid: str):
     except Exception as e:
         yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
 
-
-async def get_org_ai_model(org_id: int, db_session: AsyncSession) -> str:
-    """
-    Get the AI model for MagicBlocks based on the organization's plan.
-
-    - Standard plan (or lower): gemini-2.5-flash-lite
-    - Pro plan or higher: gemini-3-flash-preview
-    """
-    try:
-        current_plan = await get_org_plan(org_id, db_session)
-
-        # Pro or Enterprise plans get the better model
-        if plan_meets_requirement(current_plan, "pro"):
-            return "gemini-3-flash-preview"
-
-        # Standard and free plans get the lite model
-        return "gemini-2.5-flash-lite"
-    except Exception:
-        # Fallback to lite model if plan check fails
-        return "gemini-2.5-flash-lite"
 
 
 @router.post(
@@ -125,7 +106,9 @@ async def start_magicblock_session(
     await reserve_ai_credit(org.id, db_session, amount=3)
 
     # Get AI model
-    ai_model = await get_org_ai_model(org.id, db_session)
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
 
     # Create new session
     session = create_magicblock_session(
@@ -138,7 +121,8 @@ async def start_magicblock_session(
     stream = generate_magicblock_stream(
         prompt=session_request.prompt,
         session=session,
-        gemini_model_name=ai_model
+        gemini_model_name=ai_model,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(
@@ -224,7 +208,9 @@ async def iterate_magicblock_session(
     await reserve_ai_credit(org.id, db_session, amount=3)
 
     # Get AI model
-    ai_model = await get_org_ai_model(org.id, db_session)
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
 
     # Use client-provided HTML or fall back to session's current_html
     html_to_iterate = message_request.current_html or session.current_html
@@ -234,7 +220,8 @@ async def iterate_magicblock_session(
         prompt=message_request.message,
         session=session,
         gemini_model_name=ai_model,
-        current_html=html_to_iterate
+        current_html=html_to_iterate,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(

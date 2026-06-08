@@ -16,6 +16,7 @@ from src.security.features_utils.usage import reserve_ai_credit
 from src.security.features_utils.plan_check import get_org_plan
 from src.security.features_utils.plans import plan_meets_requirement
 from src.security.features_utils.dependencies import require_playgrounds_feature
+from src.services.ai.model_selector import get_model_for_task
 from src.services.playgrounds.playgrounds_generator import (
     get_playground_session,
     create_playground_session,
@@ -41,16 +42,6 @@ async def event_generator(generator, session_uuid: str):
     except Exception:
         logging.exception("Error in playground event stream for session %s", session_uuid)
         yield f"data: {json.dumps({'type': 'error', 'message': 'An internal error occurred.'})}\n\n"
-
-
-async def get_org_ai_model(org_id: int, db_session: AsyncSession) -> str:
-    try:
-        current_plan = await get_org_plan(org_id, db_session)
-        if plan_meets_requirement(current_plan, "pro"):
-            return "gemini-3-flash-preview"
-        return "gemini-2.5-flash-lite"
-    except Exception:
-        return "gemini-2.5-flash-lite"
 
 
 async def _get_course_context(
@@ -130,7 +121,9 @@ async def start_playground_session(
     enforce_ai_rate_limit(generate_acting_user_id, org.id)
     await reserve_ai_credit(org.id, db_session, amount=3)
 
-    ai_model = await get_org_ai_model(org.id, db_session)
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
 
     # Fetch RAG context if course linked
     course_context, _ = await _get_course_context(
@@ -151,6 +144,7 @@ async def start_playground_session(
         gemini_model_name=ai_model,
         current_html=playground.html_content or None,
         course_context=course_context,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(
@@ -225,7 +219,9 @@ async def iterate_playground_session(
     enforce_ai_rate_limit(iterate_acting_user_id, org.id)
     await reserve_ai_credit(org.id, db_session, amount=3)
 
-    ai_model = await get_org_ai_model(org.id, db_session)
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
 
     # Fetch RAG context if course linked
     course_context, _ = await _get_course_context(
@@ -243,6 +239,7 @@ async def iterate_playground_session(
         gemini_model_name=ai_model,
         current_html=html_to_iterate,
         course_context=course_context,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(

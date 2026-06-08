@@ -7,6 +7,7 @@ import asyncio
 
 from config.config import get_learnhouse_config
 from src.services.ai.base import get_gemini_client
+from src.services.ai.rotation import ModelRotationService
 from src.services.boards.schemas.boards_playground import (
     BoardsPlaygroundContext,
     BoardsPlaygroundSessionData,
@@ -141,6 +142,7 @@ async def generate_boards_playground_stream(
     session: BoardsPlaygroundSessionData,
     gemini_model_name: str = "gemini-2.0-flash",
     current_html: Optional[str] = None,
+    is_pro: bool = False,
 ) -> AsyncGenerator[str, None]:
     try:
         client = get_gemini_client()
@@ -179,8 +181,15 @@ Please modify the HTML code above according to the user's request. Output ONLY t
         else:
             contents.append({"role": "user", "parts": [{"text": prompt}]})
 
-        response = client.models.generate_content_stream(
-            model=gemini_model_name, contents=contents
+        def make_stream_call(m: str):
+            return client.models.generate_content_stream(
+                model=m, contents=contents
+            )
+
+        response = ModelRotationService.call_with_rotation_stream(
+            task_type="content_generation",
+            is_pro=is_pro,
+            call_fn=make_stream_call
         )
 
         full_response = ""

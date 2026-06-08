@@ -16,6 +16,7 @@ from src.security.features_utils.usage import (
 from src.security.features_utils.plan_check import get_org_plan
 from src.security.features_utils.plans import plan_meets_requirement
 from src.security.org_auth import is_org_member
+from src.services.ai.model_selector import get_model_for_task
 from src.services.boards.boards_playground import (
     get_boards_playground_session,
     create_boards_playground_session,
@@ -43,15 +44,6 @@ async def event_generator(generator, session_uuid: str):
         logging.exception("Error in boards playground event stream for session %s", session_uuid)
         yield f"data: {json.dumps({'type': 'error', 'message': 'An internal error occurred.'})}\n\n"
 
-
-async def get_org_ai_model(org_id: int, db_session: AsyncSession) -> str:
-    try:
-        current_plan = await get_org_plan(org_id, db_session)
-        if plan_meets_requirement(current_plan, "pro"):
-            return "gemini-3-flash-preview"
-        return "gemini-2.5-flash-lite"
-    except Exception:
-        return "gemini-2.5-flash-lite"
 
 
 @router.post(
@@ -100,7 +92,9 @@ async def start_boards_playground_session(
     enforce_ai_rate_limit(start_acting_user_id, org.id)
     await reserve_ai_credit(org.id, db_session, amount=3)
 
-    ai_model = await get_org_ai_model(org.id, db_session)
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
 
     session = create_boards_playground_session(
         block_uuid=session_request.block_uuid,
@@ -113,6 +107,7 @@ async def start_boards_playground_session(
         prompt=session_request.prompt,
         session=session,
         gemini_model_name=ai_model,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(
@@ -185,7 +180,9 @@ async def iterate_boards_playground_session(
     enforce_ai_rate_limit(iterate_acting_user_id, org.id)
     await reserve_ai_credit(org.id, db_session, amount=3)
 
-    ai_model = await get_org_ai_model(org.id, db_session)
+    current_plan = await get_org_plan(org.id, db_session)
+    is_pro = plan_meets_requirement(current_plan, "pro")
+    ai_model = get_model_for_task("content_generation", is_pro)
 
     html_to_iterate = message_request.current_html or session.current_html
 
@@ -194,6 +191,7 @@ async def iterate_boards_playground_session(
         session=session,
         gemini_model_name=ai_model,
         current_html=html_to_iterate,
+        is_pro=is_pro,
     )
 
     return StreamingResponse(

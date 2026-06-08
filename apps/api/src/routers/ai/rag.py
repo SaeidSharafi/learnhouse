@@ -32,6 +32,7 @@ from src.services.ai.base import (
     delete_chat_session,
     update_chat_session_meta,
 )
+from src.services.ai.model_selector import get_model_for_task
 from src.services.ai.rag.embedding_service import embed_course_content
 from src.services.ai.rag.query_service import query_course_rag_stream
 
@@ -241,8 +242,8 @@ async def api_rag_chat(
             chat_session["aichat_uuid"],
             chat_request.message,
             sources,
-            chat_request.message,  # context_text for follow-ups
-            "gemini-2.5-flash",
+            chat_request.message,
+            get_model_for_task("main_assistant", is_pro=False),
             user_id=chat_acting_user_id,
             course_uuid=chat_request.course_uuid,
             is_new_session=is_new_session,
