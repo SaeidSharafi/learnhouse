@@ -9,7 +9,7 @@ from typing import Final
 
 
 SUPPORTED_LANGUAGES: Final[tuple[str, ...]] = (
-    "en", "fr", "de", "es", "ar", "ja", "pt", "ru", "zh", "hi",
+    "en", "fa","fr", "de", "es", "ar", "ja", "pt", "ru", "zh", "hi",
     "ko", "it", "tr", "vi", "id", "pl", "nl", "th", "bn",
 )
 
@@ -18,6 +18,42 @@ DEFAULT_LANGUAGE: Final[str] = "en"
 
 EMAIL_TRANSLATIONS: dict[str, dict[str, str]] = {
     "en": {
+        "account_creation.subject": "Welcome to LearnHouse, {username}!",
+        "account_creation.heading": "Welcome, {username}!",
+        "account_creation.body": "Your LearnHouse account is ready. Get started by creating your own organization or joining one.",
+        "account_creation.cta": "Get Started",
+        "account_creation.footer": "Need help? Visit {academy_link} to learn the basics.",
+        "academy_link_text": "LearnHouse Academy",
+
+        "password_reset.subject": "Reset your password",
+        "password_reset.heading": "Reset your password",
+        "password_reset.body": "Hi {username}, we received a request to reset your password. Use the code below or click the button.",
+        "password_reset.cta": "Reset Password",
+        "password_reset.footer_org": "If you didn't request a password reset, you can safely ignore this email. This link will expire shortly.",
+        "password_reset.footer_platform": "If you didn't request a password reset, you can safely ignore this email. This link will expire in 1 hour.",
+
+        "invitation.subject": "You've been invited to join {org_name}",
+        "invitation.heading": "You've been invited!",
+        "invitation.intro": "<strong>@{inviter}</strong> has invited you to join <strong>{org_name}</strong> on LearnHouse.",
+        "invitation.code_hint": "Use the invite code above, or click the button below to sign up.",
+        "invitation.no_code_hint": "Click the button below to get started.",
+        "invitation.cta": "Join {org_name}",
+        "invitation.footer": "This invitation was sent by @{inviter}. If you weren't expecting this, you can safely ignore it.",
+
+        "role_changed.subject": "Your role in {org_name} has been updated",
+        "role_changed.heading": "Your role has been updated",
+        "role_changed.body_1": "Hi {username}, your role in <strong>{org_name}</strong> has been changed to <strong>{role}</strong>.",
+        "role_changed.body_2": "This may affect what you can access and manage within the organization. If you have any questions, please reach out to your organization administrator.",
+        "role_changed.footer": "You received this email because your role was changed in {org_name} on LearnHouse.",
+
+        "email_verification.subject": "Verify your email address",
+        "email_verification.heading": "Verify your email",
+        "email_verification.body": "Hi {username}, welcome to LearnHouse! Click the button below to verify your email address and activate your account.",
+        "email_verification.cta": "Verify Email Address",
+        "email_verification.copy_paste": "Or copy and paste this link:",
+        "email_verification.footer": "This link expires in 1 hour. If you didn't create a LearnHouse account, you can safely ignore this email.",
+    },
+    "fa": {
         "account_creation.subject": "Welcome to LearnHouse, {username}!",
         "account_creation.heading": "Welcome, {username}!",
         "account_creation.body": "Your LearnHouse account is ready. Get started by creating your own organization or joining one.",

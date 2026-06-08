@@ -11,6 +11,7 @@ const LOCALE_LOADERS: Record<string, () => Promise<{ default: any }>> = {
   es: () => import('../locales/es.json'),
   ar: () => import('../locales/ar.json'),
   ja: () => import('../locales/ja.json'),
+  fa: () => import('../locales/fa.json'),
   pt: () => import('../locales/pt.json'),
   ru: () => import('../locales/ru.json'),
   zh: () => import('../locales/zh.json'),

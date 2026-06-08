@@ -6,6 +6,7 @@ export interface Language {
 
 export const AVAILABLE_LANGUAGES: Language[] = [
   { code: 'en', translationKey: 'common.english', nativeName: 'English' },
+  { code: 'fa', translationKey: 'common.farsi', nativeName: 'فارسی' },
   { code: 'fr', translationKey: 'common.french', nativeName: 'Français' },
   { code: 'de', translationKey: 'common.german', nativeName: 'Deutsch' },
   { code: 'es', translationKey: 'common.spanish', nativeName: 'Español' },

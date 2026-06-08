@@ -50,7 +50,7 @@ export function OfferCard({ offer, orgslug }: OfferCardProps) {
               <p className="text-sm text-gray-500 mt-1 leading-relaxed line-clamp-2">{offer.description}</p>
             )}
           </div>
-          <div className="shrink-0 text-right">
+          <div className="shrink-0 text-end">
             <div className={`text-xl font-black ${isSubscription ? 'text-indigo-700' : 'text-gray-900'}`}>
               {formattedPrice}
             </div>

@@ -181,7 +181,7 @@ function MagicBlockChat({
               disabled={isLoading}
               rows={2}
               className={cn(
-                "w-full resize-none rounded-lg ring-1 ring-inset ring-white/10 bg-gray-950/40 px-4 py-3 pr-12",
+                "w-full resize-none rounded-lg ring-1 ring-inset ring-white/10 bg-gray-950/40 px-4 py-3 pe-12",
                 "text-sm text-white placeholder:text-white/30",
                 "focus:outline-none focus:ring-white/20",
                 isLoading ? "opacity-30" : ""
@@ -191,7 +191,7 @@ function MagicBlockChat({
               type="submit"
               disabled={!canSendMessage}
               className={cn(
-                "absolute right-3 bottom-3 p-2 rounded-lg transition-all delay-75 ease-linear",
+                "absolute end-3 bottom-3 p-2 rounded-lg transition-all delay-75 ease-linear",
                 canSendMessage
                   ? "bg-white/10 text-white/70 hover:text-white hover:bg-white/20 outline outline-1 outline-neutral-100/10 hover:outline-neutral-200/40"
                   : "bg-white/5 text-white/30 cursor-not-allowed"

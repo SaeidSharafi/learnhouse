@@ -60,7 +60,7 @@ function EnrollmentCard({ enrollment, orgslug, onManageBilling, billingLoading }
         <div className="flex items-start justify-between gap-3">
           <p className="font-bold text-gray-900 leading-snug">{enrollment.offer_name}</p>
           {formattedPrice && (
-            <div className="shrink-0 text-right">
+            <div className="shrink-0 text-end">
               <p className={`font-black text-lg ${isSubscription ? 'text-indigo-700' : 'text-gray-900'}`}>
                 {formattedPrice}
               </p>

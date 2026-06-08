@@ -177,7 +177,7 @@ function DashMobileMenu() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 8, scale: 0.97 }}
               transition={{ type: 'spring', damping: 30, stiffness: 360 }}
-              className="fixed left-4 right-4 z-[9998] max-w-sm mx-auto bg-[#0e0e10]/95 backdrop-blur-xl rounded-2xl overflow-hidden"
+              className="fixed start-4 end-4 z-[9998] max-w-sm mx-auto bg-[#0e0e10]/95 backdrop-blur-xl rounded-2xl overflow-hidden"
               style={{
                 bottom: 'calc(env(safe-area-inset-bottom) + 5.5rem)',
                 boxShadow: '0 8px 32px rgba(0,0,0,0.4)',
@@ -236,11 +236,11 @@ function DashMobileMenu() {
                   className="flex items-center w-full rounded-lg px-2.5 py-2 gap-2.5 text-white/40 hover:text-white/80 hover:bg-white/[0.05] transition-all"
                 >
                   <Globe size={15} weight="fill" />
-                  <span className="text-sm font-medium flex-1 text-left">{t('common.language')}</span>
+                  <span className="text-sm font-medium flex-1 text-start">{t('common.language')}</span>
                   <CaretDown size={10} weight="bold" className={cn('transition-transform', langExpanded && 'rotate-180')} />
                 </button>
                 {langExpanded && (
-                  <div className="ml-2 pl-3 border-l border-white/[0.05] space-y-px">
+                  <div className="ms-2 ps-3 border-s border-white/[0.05] space-y-px">
                     {AVAILABLE_LANGUAGES.map(lang => (
                       <button
                         key={lang.code}
@@ -358,7 +358,7 @@ const PanelItem = ({
     {active && (
       <span
         aria-hidden="true"
-        className="absolute left-0.5 top-1/2 -translate-y-1/2 h-4 w-[2px] bg-white rounded-full"
+        className="absolute start-0.5 top-1/2 -translate-y-1/2 h-4 w-[2px] bg-white rounded-full"
       />
     )}
     {icon}
