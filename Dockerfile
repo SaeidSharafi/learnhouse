@@ -96,7 +96,6 @@ COPY ./apps/api ./
 
 # Remove Enterprise Edition folder for public builds
 ARG LEARNHOUSE_PUBLIC=false
-RUN if [ "$LEARNHOUSE_PUBLIC" = "true" ]; then rm -rf /app/api/ee; fi
 
 # Collab server: copy built JS + production deps
 WORKDIR /app/collab

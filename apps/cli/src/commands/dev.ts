@@ -279,15 +279,15 @@ export async function devCommand(opts: { ee?: boolean; adminEmail?: string; admi
     }
   }
 
+  const eeEffective = opts.ee || fs.existsSync(eePath)
   serviceEnv = {
     FORCE_COLOR: '1',
     LEARNHOUSE_DEVELOPMENT_MODE: 'true',
     ...(adminEmail && { LEARNHOUSE_INITIAL_ADMIN_EMAIL: adminEmail }),
     ...(adminPassword && { LEARNHOUSE_INITIAL_ADMIN_PASSWORD: adminPassword }),
-    ...(!opts.ee && { LEARNHOUSE_DISABLE_EE: '1' }),
-    // Bypass license verification for local dev when --ee is active
-    ...(opts.ee && { LEARNHOUSE_FORCE_EE: '1' }),
-  }
+    ...(eeEffective && { LEARNHOUSE_FORCE_EE: '1' }),
+  };
+
 
   // Health checks
   const healthSpinner = p.spinner()
