@@ -114,9 +114,15 @@ function createDragHandlePlugin() {
     function handleButtonHover(event: MouseEvent) {
       const button = event.currentTarget as HTMLElement
       const tooltip = button.querySelector('.tooltip-text') as HTMLElement
+      const isRtl = document.documentElement.dir === 'rtl'; 
       if (tooltip) {
         const buttonRect = button.getBoundingClientRect()
-        tooltip.style.left = `${buttonRect.left + buttonRect.width / 2}px`
+        if (isRtl) {
+          tooltip.style.right = `${buttonRect.right + buttonRect.width / 2}px`
+        }else{
+tooltip.style.left = `${buttonRect.left + buttonRect.width / 2}px`
+          }
+        
         tooltip.style.top = `${buttonRect.top - 32}px`
       }
     }
@@ -384,7 +390,12 @@ function createDragHandlePlugin() {
     function positionHandle(block: HTMLElement) {
       if (!dragHandle) return
       const rect = block.getBoundingClientRect()
-      dragHandle.style.left = `${rect.left - 28}px`
+      const isRtl = document.documentElement.dir === 'rtl'; 
+      if(isRtl){
+        dragHandle.style.right = `${window.innerWidth - rect.right - 28}px`
+      }else{
+         dragHandle.style.left = `${rect.left - 28}px`
+      }
       dragHandle.style.top = `${rect.top + 4}px`
     }
 
@@ -415,8 +426,12 @@ function createDragHandlePlugin() {
 
       const editorRect = view.dom.getBoundingClientRect()
       const y = position === 'before' ? rect.top : rect.bottom
-
-      dropIndicator.style.left = `${editorRect.left + 10}px`
+      const isRtl = document.documentElement.dir === 'rtl'; 
+      if(isRtl){
+        dropIndicator.style.right = `${window.innerWidth - editorRect.right + 10}px`
+      }else{
+         dropIndicator.style.left = `${editorRect.left + 10}px`
+      }
       dropIndicator.style.width = `${editorRect.width - 20}px`
       dropIndicator.style.top = `${y - 1}px`
       dropIndicator.classList.add('visible')

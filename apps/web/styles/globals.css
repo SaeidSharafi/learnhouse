@@ -2236,3 +2236,20 @@
   display: block;
 }
 
+
+html[lang='fa'],
+html[dir='rtl'] {
+  --font-default: var(--font-vazirmatn) !important;
+  font-family: var(--font-vazirmatn), sans-serif !important;
+}
+html[lang='fa'] a,
+html[dir='rtl'] a {
+  text-align: right;
+}
+code, pre{
+  direction: ltr;
+}
+
+html[dir='rtl'] body[data-scroll-locked] {
+  
+}

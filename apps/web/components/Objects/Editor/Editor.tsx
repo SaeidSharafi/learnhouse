@@ -516,7 +516,7 @@ function Editor(props: EditorProps) {
                   opacity: '0.5',
                 }}
               />
-              <div className="activity-editor-left-options space-x-2 ">
+              <div className="activity-editor-start-options space-x-2 ">
                 {/* Version History Button */}
                 {canUseVersioning ? (
                   <ToolTip content={t('editor.versioning.version_history')}>
@@ -558,7 +558,7 @@ function Editor(props: EditorProps) {
 
                   {/* Conflict Modal */}
                   {showConflictModal && conflictInfo?.hasConflict && (
-                    <div className="absolute top-full right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50">
+                    <div className="absolute top-full end-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-50">
                       <div className="flex items-start gap-2 mb-3">
                         <AlertTriangle className="text-amber-500 flex-shrink-0 mt-0.5" size={18} />
                         <div>

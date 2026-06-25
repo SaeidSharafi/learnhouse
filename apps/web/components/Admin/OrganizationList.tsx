@@ -338,13 +338,13 @@ export default function OrganizationList() {
       <div className="flex flex-col gap-3 mb-4">
         <div className="flex items-center justify-between">
           <div className="relative">
-            <MagnifyingGlass size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-white/30" />
+            <MagnifyingGlass size={14} className="absolute start-2.5 top-1/2 -translate-y-1/2 text-white/30" />
             <input
               type="text"
               value={search}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search organizations..."
-              className="bg-white/[0.05] border border-white/[0.08] rounded-lg pl-8 pr-3 py-1.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/20 w-64"
+              className="bg-white/[0.05] border border-white/[0.08] rounded-lg ps-8 pe-3 py-1.5 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-white/20 w-64"
             />
           </div>
           <div className="flex items-center gap-3">
@@ -363,7 +363,7 @@ export default function OrganizationList() {
         <div className="flex items-center justify-between">
           {isSaaS ? (
             <div className="flex items-center gap-2">
-              <span className="text-xs text-white/40 mr-1">Plan:</span>
+              <span className="text-xs text-white/40 me-1">Plan:</span>
               {PLANS_SAAS.map((p) => (
                 <button
                   key={p}
@@ -382,7 +382,7 @@ export default function OrganizationList() {
             <div />
           )}
           <div className="flex items-center gap-2">
-            <span className="text-xs text-white/40 mr-1">Sort:</span>
+            <span className="text-xs text-white/40 me-1">Sort:</span>
             {([
               ['id', 'Default'],
               ['newest', 'Newest'],
@@ -432,7 +432,7 @@ export default function OrganizationList() {
           </div>
         ) : (
           <>
-      <table className="w-full text-left">
+      <table className="w-full text-start">
         <thead>
           <tr className="border-b border-white/[0.08]">
             <th className="px-4 py-3 text-xs font-medium text-white/40 uppercase tracking-wider">Organization</th>

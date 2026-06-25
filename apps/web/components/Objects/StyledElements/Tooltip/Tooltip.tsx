@@ -26,9 +26,9 @@ const ToolTip = (props: TooltipProps) => {
                 : `z-[var(--z-tooltip)] select-none will-change-[transform,opacity]
                   data-[state=delayed-open]:animate-in data-[state=delayed-open]:fade-in-0 duration-200
                   data-[side=top]:data-[state=delayed-open]:slide-in-from-bottom-0.5
-                  data-[side=right]:data-[state=delayed-open]:slide-in-from-left-0.5
+                  data-[side=right]:data-[state=delayed-open]:slide-in-from-start-0.5
                   data-[side=bottom]:data-[state=delayed-open]:slide-in-from-top-0.5
-                  data-[side=left]:data-[state=delayed-open]:slide-in-from-right-0.5
+                  data-[side=left]:data-[state=delayed-open]:slide-in-from-end-0.5
                   data-[state=closed]:animate-out data-[state=closed]:fade-out-0
                   rounded-md px-2.5 py-[5px] text-[11px] font-medium leading-none
                   shadow-[0_10px_15px_-3px_rgba(0,0,0,0.08),0_4px_6px_-4px_rgba(0,0,0,0.05)]

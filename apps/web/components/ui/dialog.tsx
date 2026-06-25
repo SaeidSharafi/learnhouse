@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { Cross2Icon } from "@radix-ui/react-icons"
 
 import { cn } from "@/lib/utils"
+import { useIsRtl } from '@/lib/useIsRtl'
 
 const Dialog = DialogPrimitive.Root
 
@@ -30,12 +31,14 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
+>(({ className, children, ...props }, ref) => {
   // NOTE: Overlay and Content are rendered as direct, sibling children of
   // DialogPortal. Radix wraps *each* child in <Presence> so it can defer
   // unmount until the exit animation finishes. Wrapping them in a single
   // outer <div> would collapse that into one Presence that sees no animation
   // on itself → immediate unmount → no close animation.
+const isRtl = useIsRtl(); 
+  return (
   <DialogPortal>
     <DialogOverlay />
     <DialogPrimitive.Content
@@ -46,7 +49,7 @@ const DialogContent = React.forwardRef<
       // sizing (`w-auto`) working with `position: fixed`.
       style={{
         zIndex: 'var(--z-modal)' as any,
-        translate: '-50% -50%',
+        translate: isRtl ? '50% -50%' : '-50% -50%',
         willChange: 'scale, opacity',
         backfaceVisibility: 'hidden',
         WebkitBackfaceVisibility: 'hidden',
@@ -60,22 +63,22 @@ const DialogContent = React.forwardRef<
         }
       }}
       className={cn(
-        "lh-modal-content fixed left-[50%] top-[50%] grid w-full max-w-lg gap-0 border border-gray-200/80 bg-white shadow-2xl shadow-black/10 rounded-2xl",
+        "lh-modal-content fixed start-[50%] top-[50%] grid w-full max-w-lg gap-0 border border-gray-200/80 bg-white shadow-2xl shadow-black/10 rounded-2xl",
         className
       )}
       {...props}
     >
       {children}
       <DialogPrimitive.Close
-        className="absolute right-4 top-4 p-1.5 rounded-lg bg-gray-100/80 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:pointer-events-none"
+        className="absolute end-4 top-4 p-1.5 rounded-lg bg-gray-100/80 text-gray-500 hover:bg-gray-200 hover:text-gray-700 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400 focus:ring-offset-2 disabled:pointer-events-none"
         aria-label="Close dialog"
       >
         <Cross2Icon className="h-4 w-4" />
         <span className="sr-only">Close</span>
       </DialogPrimitive.Close>
     </DialogPrimitive.Content>
-  </DialogPortal>
-))
+  </DialogPortal>)
+})
 DialogContent.displayName = DialogPrimitive.Content.displayName
 
 const DialogHeader = ({
@@ -84,7 +87,7 @@ const DialogHeader = ({
 }: React.HTMLAttributes<HTMLDivElement>) => (
   <div
     className={cn(
-      "flex flex-col space-y-0 text-center sm:text-left",
+      "flex flex-col space-y-0 text-center sm:text-start",
       className
     )}
     {...props}

@@ -1,5 +1,5 @@
 // Curated catalog of superadmin endpoints used by the Documentation & Playground tab.
-// Each entry feeds both the left-rail list and the right-pane detail/try-it view.
+// Each entry feeds both the start-rail list and the end-pane detail/try-it view.
 
 import type { HttpMethod } from '@components/Admin/Developers/snippets'
 

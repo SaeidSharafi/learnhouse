@@ -737,6 +737,7 @@ function BoardEditorInner({
     <div
       className="relative h-screen w-full overflow-hidden board-effect-shake-target"
       style={{
+        direction: 'ltr',
         backgroundColor: '#f8f8f8',
         backgroundImage: 'radial-gradient(circle, #d1d1d1 1px, transparent 1px)',
         backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
@@ -799,7 +800,7 @@ function BoardEditorInner({
                 top: mousePos.y + 16,
               }}
             >
-              <div className="flex items-center gap-1.5 rounded-full bg-neutral-800 pl-1.5 pr-2.5 py-1 shadow-lg">
+                <div className="flex items-center gap-1.5 rounded-full bg-neutral-800 ps-1.5 pe-2.5 py-1 shadow-lg">
                 <div className="w-5 h-5 rounded-full bg-white/15 flex items-center justify-center">
                   <Icon size={11} weight="bold" className="text-white" />
                 </div>

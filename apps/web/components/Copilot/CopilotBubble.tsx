@@ -284,7 +284,7 @@ function BubbleInner({ orgslug, open, onOpenChange, sessionToLoad }: CopilotBubb
       {/* Floating panel */}
       {panelMounted && (
         <div
-          className="fixed bottom-[72px] right-4 z-[9998] flex flex-col bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden nice-shadow"
+          className="fixed bottom-[72px] end-4 z-[9998] flex flex-col bg-white dark:bg-neutral-900 rounded-2xl overflow-hidden nice-shadow"
           style={{
             width: 'min(340px, calc(100vw - 24px))',
             height: 'min(480px, calc(100vh - 110px))',
@@ -426,7 +426,7 @@ function BubbleInner({ orgslug, open, onOpenChange, sessionToLoad }: CopilotBubb
                       <button
                         key={i}
                         onClick={() => sendMessage(s)}
-                        className="group flex items-center gap-1.5 w-fit max-w-full text-left px-2.5 py-1.5 text-[11px] rounded-xl text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/50 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 transition-all"
+                        className="group flex items-center gap-1.5 w-fit max-w-full text-start px-2.5 py-1.5 text-[11px] rounded-xl text-neutral-600 dark:text-neutral-300 bg-neutral-50 dark:bg-neutral-800/50 hover:bg-violet-50 dark:hover:bg-violet-500/10 hover:text-violet-700 transition-all"
                       >
                         <ArrowRight size={10} weight="bold" className="flex-shrink-0 text-neutral-400 group-hover:text-violet-500" />
                         <span className="truncate">{s}</span>
@@ -507,7 +507,7 @@ function BubbleInner({ orgslug, open, onOpenChange, sessionToLoad }: CopilotBubb
       {/* FAB */}
       <button
         onClick={() => onOpenChange(!open)}
-        className="fixed bottom-4 right-4 z-[9999] flex items-center justify-center rounded-full bg-violet-600 hover:bg-violet-700 text-white transition-all duration-200 hover:scale-105 active:scale-95 nice-shadow"
+        className="fixed bottom-4 end-4 z-[9999] flex items-center justify-center rounded-full bg-violet-600 hover:bg-violet-700 text-white transition-all duration-200 hover:scale-105 active:scale-95 nice-shadow"
         style={{ width: 44, height: 44 }}
         aria-label="Open Copilot"
       >

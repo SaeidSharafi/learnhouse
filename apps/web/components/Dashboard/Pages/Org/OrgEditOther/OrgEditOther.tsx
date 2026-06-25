@@ -194,7 +194,7 @@ const OrgEditOther: React.FC = () => {
                       <AlertTriangle className="h-4 w-4 text-orange-500 hover:text-orange-600 transition-colors" />
                     </TooltipTrigger>
                     <TooltipContent 
-                      className="max-w-[400px] bg-orange-50 border-orange-100 text-orange-900 [&>p]:text-orange-800 data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-right-1 data-[side=right]:slide-in-from-left-1 data-[side=top]:slide-in-from-bottom-1"
+                      className="max-w-[400px] bg-orange-50 border-orange-100 text-orange-900 [&>p]:text-orange-800 data-[side=bottom]:slide-in-from-top-1 data-[side=left]:slide-in-from-end-1 data-[side=right]:slide-in-from-start-1 data-[side=top]:slide-in-from-bottom-1"
                       sideOffset={8}
                     >
                       <p className="p-2 leading-relaxed">{t('dashboard.organization.scripts.warning')}</p>
@@ -214,7 +214,7 @@ const OrgEditOther: React.FC = () => {
                 }}
                 className="bg-black text-white hover:bg-black/90"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus className="h-4 w-4 me-2" />
                 {t('dashboard.organization.scripts.add_script')}
               </Button>
             )}
@@ -248,7 +248,7 @@ const OrgEditOther: React.FC = () => {
                           : script.content}
                       </pre>
                     </div>
-                    <div className="ml-4 flex space-x-2">
+                    <div className="ms-4 flex space-x-2">
                       <Button
                         variant="ghost"
                         size="icon"

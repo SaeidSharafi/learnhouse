@@ -140,7 +140,7 @@ export default function AuthBrandingPanel({ org, welcomeText }: AuthBrandingPane
         {/* Unsplash attribution (required by Unsplash API guidelines) */}
         {background_type === 'unsplash' && background_image && unsplash_photographer_name && (
           <div className={cn(
-            "absolute bottom-3 left-4 right-4 z-10 text-[11px] leading-tight",
+            "absolute bottom-3 start-4 end-4 z-10 text-[11px] leading-tight",
             text_color === 'light' ? "text-white/70" : "text-gray-700"
           )}>
             Photo by{' '}
