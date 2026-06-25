@@ -247,7 +247,12 @@ export const HeaderProfileBox = ({ primaryColor = '' }: { primaryColor?: string 
                       {AVAILABLE_LANGUAGES.map((language) => (
                         <DropdownMenuItem 
                           key={language.code}
-                          onClick={() => changeLanguage(language.code)}
+                          onClick={() => {
+                                        try {
+                                          localStorage.setItem('i18nextLng_userPicked', '1')
+                                        } catch {}
+                                        changeLanguage(language.code)
+                                      }}
                           className="flex items-center justify-between"
                         >
                           <span>{t(language.translationKey)} ({language.nativeName})</span>
