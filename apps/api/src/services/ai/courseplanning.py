@@ -6,7 +6,8 @@ import json
 import base64
 
 from config.config import get_learnhouse_config
-from src.services.ai.llm import generate_stream, attachments_to_parts, model_for_tier
+from src.services.ai.llm import attachments_to_parts, model_for_tier
+from src.services.ai.rotation import generate_stream_with_rotation
 from src.services.ai.schemas.courseplanning import (
     CoursePlan,
     CoursePlanningSessionData,
@@ -430,8 +431,9 @@ IMPORTANT: You MUST incorporate the materials provided above into the course pla
 
         # Stream raw JSON text chunks (parsed into a CoursePlan after completion).
         full_response = ""
-        async for chunk in generate_stream(
+        async for chunk in generate_stream_with_rotation(
             model_name=model_name or model_for_tier("standard"),
+            tier="standard",
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             history=history,
@@ -510,8 +512,9 @@ Please modify the content according to the user's request. Output ONLY the compl
 
         # Stream raw JSON text chunks (parsed downstream).
         full_response = ""
-        async for chunk in generate_stream(
+        async for chunk in generate_stream_with_rotation(
             model_name=model_name or model_for_tier("standard"),
+            tier="standard",
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             temperature=0.7,

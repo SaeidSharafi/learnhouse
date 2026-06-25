@@ -6,7 +6,8 @@ import redis
 import json
 
 from config.config import get_learnhouse_config
-from src.services.ai.llm import generate, generate_stream, model_for_tier
+from src.services.ai.llm import model_for_tier
+from src.services.ai.rotation import generate_with_rotation, generate_stream_with_rotation
 
 logger = logging.getLogger(__name__)
 
@@ -31,8 +32,9 @@ async def ask_ai(
     Process an AI query through the provider-agnostic LLM layer with course content as context.
     """
     try:
-        output = await generate(
+        output = await generate_with_rotation(
             model_name=model_name or model_for_tier("standard"),
+            tier="standard",
             user_prompt=question,
             system_prompt=_build_context_prompt(message_for_the_prompt, text_reference),
             history=message_history,
@@ -314,8 +316,9 @@ async def generate_chat_title(user_message: str, ai_response: str) -> str:
             f"User: {user_message[:300]}\n"
             f"Assistant: {ai_response[:300]}"
         )
-        text = await generate(
+        text = await generate_with_rotation(
             model_name=model_for_tier("fast"),
+            tier="fast",
             user_prompt=prompt,
             max_tokens=30,
             temperature=0.3,
@@ -345,8 +348,9 @@ async def ask_ai_stream(
     Yields chunks of the response as they arrive.
     """
     try:
-        async for chunk in generate_stream(
+        async for chunk in generate_stream_with_rotation(
             model_name=model_name or model_for_tier("standard"),
+            tier="standard",
             user_prompt=question,
             system_prompt=_build_context_prompt(message_for_the_prompt, text_reference),
             history=message_history,
@@ -381,8 +385,9 @@ Response: {response_snippet}
 
 Questions:"""
 
-        text = await generate(
+        text = await generate_with_rotation(
             model_name=model_for_tier("fast"),
+            tier="fast",
             user_prompt=prompt,
             max_tokens=150,
             temperature=0.7,

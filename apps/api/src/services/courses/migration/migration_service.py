@@ -310,10 +310,12 @@ async def suggest_structure(
     )
 
     try:
-        from src.services.ai.llm import generate, model_for_tier
+        from src.services.ai.llm import model_for_tier
+        from src.services.ai.rotation import generate_with_rotation
 
-        raw = await generate(
+        raw = await generate_with_rotation(
             model_name=model_for_tier("fast"),
+            tier="fast",
             user_prompt=prompt,
             temperature=0.3,
             max_tokens=4096,

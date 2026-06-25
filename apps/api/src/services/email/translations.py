@@ -10,7 +10,7 @@ from typing import Final
 
 SUPPORTED_LANGUAGES: Final[tuple[str, ...]] = (
     "en", "fr", "de", "es", "ar", "ja", "pt", "ru", "zh", "hi",
-    "ko", "it", "tr", "vi", "id", "pl", "uk", "nl", "th", "bn",
+    "ko", "it", "tr", "vi", "id", "pl", "uk", "nl", "th", "bn", "fa",
 )
 
 # Locales selectable as an organisation's UI language; mirrors
@@ -18,7 +18,7 @@ SUPPORTED_LANGUAGES: Final[tuple[str, ...]] = (
 # bundle — emails for any locale without one fall back to English (see `t()`).
 SUPPORTED_UI_LANGUAGES: Final[tuple[str, ...]] = (
     "en", "fr", "de", "es", "ar", "ja", "pt", "ru", "zh", "hi",
-    "ko", "it", "tr", "vi", "id", "pl", "uk", "nl", "th", "bn", "sk",
+    "ko", "it", "tr", "vi", "id", "pl", "uk", "nl", "th", "bn", "sk", "fa",
 )
 
 DEFAULT_LANGUAGE: Final[str] = "en"

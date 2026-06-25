@@ -5,7 +5,8 @@ import redis
 import json
 
 from config.config import get_learnhouse_config
-from src.services.ai.llm import generate_stream, model_for_tier
+from src.services.ai.llm import model_for_tier
+from src.services.ai.rotation import generate_stream_with_rotation
 from src.services.boards.schemas.boards_playground import (
     BoardsPlaygroundContext,
     BoardsPlaygroundSessionData,
@@ -165,8 +166,9 @@ Please modify the HTML code above according to the user's request. Output ONLY t
             user_prompt = prompt
 
         full_response = ""
-        async for chunk in generate_stream(
+        async for chunk in generate_stream_with_rotation(
             model_name=model_name or model_for_tier("fast"),
+            tier="fast",
             user_prompt=user_prompt,
             system_prompt=system_prompt,
             history=history,
